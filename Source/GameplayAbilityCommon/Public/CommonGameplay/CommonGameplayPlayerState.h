@@ -8,6 +8,9 @@
 #include "GameFramework/PlayerState.h"
 #include "CommonGameplayPlayerState.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilitySystemReadyDelegate, UAbilitySystemComponent*, AbilitySystem);
+
 /**
  * This class holds replicated state for the player and any controllers that request a player state be made for them.
  * CommonGameplayPlayerState owns the AbilitySystemComponent, with the controller and pawn accessing it through this class.
@@ -36,7 +39,7 @@ public:
 	 * by its controller.
 	*/
 	UFUNCTION(BlueprintNativeEvent, Category="Ability System")
-	void AbilitySystemReady();
+	void AbilitySystemReady(UAbilitySystemComponent* AbilitySystemComponent);
 
 	/*
 	 * Retrieves the ability system component that is owned by this player state.
@@ -92,6 +95,12 @@ protected:
 
 public:
 
+	/*
+	 * Called when the ability system is ready. Happens after BeginPlay after
+	 *  controller possession of the pawn.
+	*/
+	UPROPERTY(BlueprintAssignable)
+	FAbilitySystemReadyDelegate AbilitySystemReadyEvent;
 
 protected:
 	

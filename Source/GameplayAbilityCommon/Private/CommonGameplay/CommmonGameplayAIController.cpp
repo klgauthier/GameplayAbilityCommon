@@ -24,6 +24,25 @@ void ACommonGameplayAIController::BeginPlay()
 			Error,
 			TEXT("CommonGameplayPlayerController requires the player state class to be a CommonGameplayPlayerState or a child of it."));
 	}
+
+	if(CommonGameplayPlayerState->IsAbilitySystemReady())
+	{
+		AbilitySystemReady(GetAbilitySystemComponent());
+	}
+	else
+	{
+		CommonGameplayPlayerState->AbilitySystemReadyEvent.AddUniqueDynamic(this, &ACommonGameplayAIController::AbilitySystemReady);
+	}
+}
+
+void ACommonGameplayAIController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if(IsValid(CommonGameplayPlayerState))
+	{
+		CommonGameplayPlayerState->AbilitySystemReadyEvent.RemoveDynamic(this, &ACommonGameplayAIController::AbilitySystemReady);
+	}
 }
 
 UAbilitySystemComponent* ACommonGameplayAIController::GetAbilitySystemComponent() const
@@ -57,4 +76,7 @@ void ACommonGameplayAIController::OnRep_PlayerState()
 		}
 	}
 }
+
+// empty implementation -- override if needed
+void ACommonGameplayAIController::AbilitySystemReady_Implementation(UAbilitySystemComponent* AbilitySystem) { }
 

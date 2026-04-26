@@ -20,6 +20,7 @@ class GAMEPLAYABILITYCOMMON_API ACommonGameplayAIController : public AAIControll
 {
 	GENERATED_BODY()
 
+public:
 	ACommonGameplayAIController();
 
 //===========
@@ -29,6 +30,8 @@ class GAMEPLAYABILITYCOMMON_API ACommonGameplayAIController : public AAIControll
 public:
 
 	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/*
 	 * Retrieves the AbilitySystemComponent from the PlayerState.
@@ -42,6 +45,12 @@ public:
 	ACommonGameplayPlayerState* GetCommonGameplayPlayerState() { return CommonGameplayPlayerState; }
 
 protected:
+
+	/*
+	 * Called when the ability system has been initialized with a controller and an avatar.
+	*/
+	UFUNCTION(BlueprintNativeEvent, Category="Ability System")
+	void AbilitySystemReady(UAbilitySystemComponent* AbilitySystem);
 
 	/*
 	 * Called only on the client so that we can refresh the AbilitySystemComponent when needed.

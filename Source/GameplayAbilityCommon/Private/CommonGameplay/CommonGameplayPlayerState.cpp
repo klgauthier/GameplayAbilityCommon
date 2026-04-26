@@ -4,6 +4,7 @@
 #include "CommonGameplay/CommonGameplayPlayerState.h"
 
 #include "AbilitySystemComponent.h"
+#include "GameplayAbilityCommon.h"
 
 ACommonGameplayPlayerState::ACommonGameplayPlayerState()
 {
@@ -16,7 +17,7 @@ ACommonGameplayPlayerState::ACommonGameplayPlayerState()
 	bAbilitySystemReady = false;
 }
 
-void ACommonGameplayPlayerState::AbilitySystemReady_Implementation() { }
+void ACommonGameplayPlayerState::AbilitySystemReady_Implementation(UAbilitySystemComponent* AbilitySystemComponent) { }
 
 UAbilitySystemComponent* ACommonGameplayPlayerState::GetAbilitySystemComponent() const
 {
@@ -34,5 +35,7 @@ void ACommonGameplayPlayerState::PostInitializeComponents()
 void ACommonGameplayPlayerState::InternalAbilitySystemReady()
 {
 	bAbilitySystemReady = true;
-	AbilitySystemReady();
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	AbilitySystemReady(ASC);
+	AbilitySystemReadyEvent.Broadcast(ASC);
 }

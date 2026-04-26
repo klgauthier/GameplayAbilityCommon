@@ -28,6 +28,8 @@ public:
 
 	virtual void BeginPlay() override;
 
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 	/*
 	 * Retrieves the AbilitySystemComponent from the PlayerState.
 	*/
@@ -40,6 +42,12 @@ public:
 	ACommonGameplayPlayerState* GetCommonGameplayPlayerState() { return CommonGameplayPlayerState; }
 
 protected:
+
+	/*
+	 * Called when the ability system has been initialized with a controller and an avatar.
+	*/
+	UFUNCTION(BlueprintNativeEvent, Category="Ability System")
+	void AbilitySystemReady(UAbilitySystemComponent* AbilitySystem);
 
 	virtual void OnRep_PlayerState() override;
 
