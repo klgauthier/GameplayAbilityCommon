@@ -4,7 +4,6 @@
 #include "CommonGameplay/CommonGameplayPlayerState.h"
 
 #include "AbilitySystemComponent.h"
-#include "GameplayAbilityCommon.h"
 
 ACommonGameplayPlayerState::ACommonGameplayPlayerState()
 {
@@ -13,11 +12,7 @@ ACommonGameplayPlayerState::ACommonGameplayPlayerState()
 	AbilitySystem->SetReplicationMode(ReplicationMode);
 
 	SetNetUpdateFrequency(100.0f);
-
-	bAbilitySystemReady = false;
 }
-
-void ACommonGameplayPlayerState::AbilitySystemReady_Implementation(UAbilitySystemComponent* AbilitySystemComponent) { }
 
 UAbilitySystemComponent* ACommonGameplayPlayerState::GetAbilitySystemComponent() const
 {
@@ -29,13 +24,8 @@ void ACommonGameplayPlayerState::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	check(AbilitySystem);
-	AbilitySystem->InitAbilityActorInfo(this, GetPawn());
-}
-
-void ACommonGameplayPlayerState::InternalAbilitySystemReady()
-{
-	bAbilitySystemReady = true;
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	AbilitySystemReady(ASC);
-	AbilitySystemReadyEvent.Broadcast(ASC);
+	if(IsValid(GetPawn()))
+	{
+		AbilitySystem->InitAbilityActorInfo(this, GetPawn());	
+	}
 }

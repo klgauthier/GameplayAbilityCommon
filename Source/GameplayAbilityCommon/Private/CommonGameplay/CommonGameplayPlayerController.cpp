@@ -6,71 +6,122 @@
 #include "AbilitySystemComponent.h"
 #include "GameplayAbilityCommon.h"
 #include "CommonGameplay/CommonGameplayPlayerState.h"
+#include "Net/UnrealNetwork.h"
+
+void ACommonGameplayPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACommonGameplayPlayerController, bServerAbilitySystemIsReady);
+}
 
 void ACommonGameplayPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CommonGameplayPlayerState = Cast<ACommonGameplayPlayerState>(PlayerState);
-
-	if(!IsValid(CommonGameplayPlayerState))
+	if(IsValid(PlayerState))
 	{
-		UE_LOG(LogGameplayAbilityCommon,
-			Error,
-			TEXT("CommonGameplayPlayerController requires the player state class to be a CommonGameplayPlayerState or a child of it."));
+		CommonGameplayPlayerState = GetPlayerState<ACommonGameplayPlayerState>();
 	}
 
-	if(CommonGameplayPlayerState->IsAbilitySystemReady())
+	if(IsValid(GetPawn()) && IsValid(CommonGameplayPlayerState))
 	{
-		AbilitySystemReady(GetAbilitySystemComponent());
+		CommonGameplayPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(CommonGameplayPlayerState, GetPawn());
 	}
-	else
-	{
-		CommonGameplayPlayerState->AbilitySystemReadyEvent.AddUniqueDynamic(this, &ACommonGameplayPlayerController::AbilitySystemReady);
-	}
-}
 
-void ACommonGameplayPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
+	CheckAbilitySystemReady();
 
-	if(IsValid(CommonGameplayPlayerState))
-	{
-		CommonGameplayPlayerState->AbilitySystemReadyEvent.RemoveDynamic(this, &ACommonGameplayPlayerController::AbilitySystemReady);
-	}
+	GetWorldTimerManager().SetTimer(CheckReadyTimerHandle,
+		this,
+		&ACommonGameplayPlayerController::CheckAbilitySystemReady,
+		1.0f/100.0f,
+		true);
 }
 
 UAbilitySystemComponent* ACommonGameplayPlayerController::GetAbilitySystemComponent() const
 {
-	if(!IsValid(CommonGameplayPlayerState))
+	if(!IsValid(PlayerState))
 	{
 		UE_LOG(LogGameplayAbilityCommon,
 			Error,
-			TEXT("[ACommonGameplayPlayerController::GetAbilitySystemComponent] Failed to get a valid CommonGameplayPlayerState."));
+			TEXT("[ACommonGameplayPlayerController::GetAbilitySystemComponent] Failed to get a valid PlayerState."));
 	
 		return nullptr;
 	}
 
-	return CommonGameplayPlayerState->GetAbilitySystemComponent();
+	const ACommonGameplayPlayerState* PlayerStateCast = Cast<ACommonGameplayPlayerState>(PlayerState);
+
+	return PlayerStateCast->GetAbilitySystemComponent();
 }
 
-void ACommonGameplayPlayerController::OnRep_PlayerState()
+bool ACommonGameplayPlayerController::IsAbilitySystemReady()
 {
-	Super::OnRep_PlayerState();
-
-	// we need to refresh our ability system component when we're a client player controller
-	// as this controller, the player state, and ability component can initialize out of order
-	if(GetWorld()->IsNetMode(NM_Client))
+	// ensure the server is ready if we're a client
+	if(IsNetMode(NM_Client) && !bServerAbilitySystemIsReady)
 	{
-		if(IsValid(CommonGameplayPlayerState))
-		{
-			if(UAbilitySystemComponent* ASC = GetAbilitySystemComponent(); IsValid(ASC))
-			{
-				ASC->RefreshAbilityActorInfo();
-			}
-		}
+		return false;
 	}
+	
+	// missing playerstate
+	if(!IsValid(PlayerState))
+	{
+		return false;
+	}
+
+	if(!IsValid(CommonGameplayPlayerState))
+	{
+		CommonGameplayPlayerState = GetPlayerState<ACommonGameplayPlayerState>();
+	}
+	
+	// missing pawn
+	if(!IsValid(GetPawn()))
+	{
+		return false;
+	}
+
+	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
+	if(!IsValid(ASC->GetAvatarActor()) && !IsValid(ASC->GetOwnerActor()))
+	{
+		ASC->InitAbilityActorInfo(CommonGameplayPlayerState, GetPawn());
+	}
+
+	if(!bServerAbilitySystemIsReady && !IsNetMode(NM_Client))
+	{
+		bServerAbilitySystemIsReady = true;
+	}
+
+	return bServerAbilitySystemIsReady;
 }
 
-// empty implementation -- override if needed
-void ACommonGameplayPlayerController::AbilitySystemReady_Implementation(UAbilitySystemComponent* AbilitySystem) { }
+void ACommonGameplayPlayerController::CheckAbilitySystemReady()
+{
+	if(!IsAbilitySystemReady())
+	{
+		return;
+	}
+
+	if(IsNetMode(NM_Client))
+	{
+		UE_LOG(LogGameplayAbilityCommon,
+			Log,
+			TEXT("Ability System Initialized on Client for player %s."), *GetName());
+	}
+	else if(IsNetMode(NM_ListenServer))
+	{
+		UE_LOG(LogGameplayAbilityCommon,
+			Log,
+			TEXT("Ability System Initialized on ListenServer for player %s."), *GetName());
+	}
+	else
+	{
+		UE_LOG(LogGameplayAbilityCommon,
+			Log,
+			TEXT("Ability System Initialized on Server for player %s."), *GetName());
+	}
+
+	Execute_AbilitySystemReady(this, GetAbilitySystemComponent());
+	Execute_AbilitySystemReady(GetPawn(), GetAbilitySystemComponent());
+	Execute_AbilitySystemReady(PlayerState, GetAbilitySystemComponent());
+	
+	GetWorldTimerManager().ClearTimer(CheckReadyTimerHandle);
+}

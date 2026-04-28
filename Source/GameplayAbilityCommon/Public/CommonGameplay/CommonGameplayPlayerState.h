@@ -5,11 +5,10 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
+#include "AbilitySystemReadyInterface.h"
 #include "GameFramework/PlayerState.h"
 #include "CommonGameplayPlayerState.generated.h"
 
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilitySystemReadyDelegate, UAbilitySystemComponent*, AbilitySystem);
 
 /**
  * This class holds replicated state for the player and any controllers that request a player state be made for them.
@@ -17,11 +16,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAbilitySystemReadyDelegate, UAbilit
  * This means the AbilitySystemComponent is replicated across players, and isn't reset when the pawn is respawned.
  */
 UCLASS()
-class GAMEPLAYABILITYCOMMON_API ACommonGameplayPlayerState : public APlayerState, public IAbilitySystemInterface
-{
-	friend class ACommonGameplayCharacter;
-	friend class ACommonGameplayPawn;
-	
+class GAMEPLAYABILITYCOMMON_API ACommonGameplayPlayerState : public APlayerState, public IAbilitySystemInterface, public IAbilitySystemReadyInterface
+{	
 	GENERATED_BODY()
 
 public:
@@ -34,32 +30,13 @@ public:
 public:
 
 	/*
-	 * Called once the ability system has been properly initialized with an avatar and an owner.
-	 * This happens some time after begin play due to waiting on the possession of the pawn
-	 * by its controller.
-	*/
-	UFUNCTION(BlueprintNativeEvent, Category="Ability System")
-	void AbilitySystemReady(UAbilitySystemComponent* AbilitySystemComponent);
-
-	/*
 	 * Retrieves the ability system component that is owned by this player state.
 	*/
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	/*
-	 * Will return true once the ability system has been properly initialized with
-	 * an avatar and an owner, some time after BeginPlay has been called.
-	*/
-	UFUNCTION(BlueprintPure, Category="Ability System")
-	bool IsAbilitySystemReady() const { return bAbilitySystemReady; }
-
 	virtual void PostInitializeComponents() override;
 
 protected:
-	/*
-	 * Called internally from CommonGameplayPawn/Character to denote that the ability system is ready.
-	*/
-	void InternalAbilitySystemReady();
 
 //============
 // PROPERTIES
@@ -83,24 +60,11 @@ protected:
 	UPROPERTY()
 	EGameplayEffectReplicationMode ReplicationMode = EGameplayEffectReplicationMode::Mixed;
 
-	/*
-	 * Designates if the ability system is properly setup and ready for use.
-	*/
-	UPROPERTY()
-	bool bAbilitySystemReady;
-
 //===========
 // DELEGATES
 //===========
 
 public:
-
-	/*
-	 * Called when the ability system is ready. Happens after BeginPlay after
-	 *  controller possession of the pawn.
-	*/
-	UPROPERTY(BlueprintAssignable)
-	FAbilitySystemReadyDelegate AbilitySystemReadyEvent;
 
 protected:
 	

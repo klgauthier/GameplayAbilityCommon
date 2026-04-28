@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "AbilitySystemReadyInterface.h"
 #include "GameFramework/Pawn.h"
 #include "CommonGameplayPawn.generated.h"
 
@@ -15,7 +16,7 @@ class ACommonGameplayPlayerState;
  * and be replicated across the network.
 */
 UCLASS()
-class GAMEPLAYABILITYCOMMON_API ACommonGameplayPawn : public APawn, public IAbilitySystemInterface
+class GAMEPLAYABILITYCOMMON_API ACommonGameplayPawn : public APawn, public IAbilitySystemInterface, public IAbilitySystemReadyInterface
 {
 	GENERATED_BODY()
 	
@@ -36,9 +37,6 @@ public:
 	ACommonGameplayPlayerState* GetCommonGameplayPlayerState() { return CommonGameplayPlayerState; }
 
 protected:
-	
-	// called only on the server
-	virtual void PossessedBy(AController* NewController) override;
 
 	// called only on the client
 	virtual void OnRep_PlayerState() override;

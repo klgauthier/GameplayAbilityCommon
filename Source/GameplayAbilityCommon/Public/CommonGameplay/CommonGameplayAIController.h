@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "AbilitySystemReadyInterface.h"
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "CommonGameplayAIController.generated.h"
 
@@ -16,7 +17,8 @@ class ACommonGameplayPlayerState;
  * replicated across the network.
 */ 
 UCLASS()
-class GAMEPLAYABILITYCOMMON_API ACommonGameplayAIController : public AAIController, public IAbilitySystemInterface
+class GAMEPLAYABILITYCOMMON_API ACommonGameplayAIController
+	: public AAIController, public IAbilitySystemInterface, public IAbilitySystemReadyInterface
 {
 	GENERATED_BODY()
 
@@ -31,8 +33,6 @@ public:
 
 	virtual void BeginPlay() override;
 
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
 	/*
 	 * Retrieves the AbilitySystemComponent from the PlayerState.
 	*/
@@ -44,18 +44,12 @@ public:
 	UFUNCTION(BlueprintPure, Category="Ability System")
 	ACommonGameplayPlayerState* GetCommonGameplayPlayerState() { return CommonGameplayPlayerState; }
 
+	UFUNCTION(BlueprintPure, Category="Ability System")
+	bool IsAbilitySystemReady();
+
 protected:
-
-	/*
-	 * Called when the ability system has been initialized with a controller and an avatar.
-	*/
-	UFUNCTION(BlueprintNativeEvent, Category="Ability System")
-	void AbilitySystemReady(UAbilitySystemComponent* AbilitySystem);
-
-	/*
-	 * Called only on the client so that we can refresh the AbilitySystemComponent when needed.
-	*/
-	virtual void OnRep_PlayerState() override;
+	
+	void CheckAbilitySystemReady();
 
 //============
 // PROPERTIES
@@ -67,6 +61,12 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<ACommonGameplayPlayerState> CommonGameplayPlayerState;
+
+	UPROPERTY(Replicated)
+	bool bServerAbilitySystemIsReady;
+
+	UPROPERTY()
+	FTimerHandle CheckReadyTimerHandle;
 
 //===========
 // DELEGATES
