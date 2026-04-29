@@ -10,7 +10,7 @@ Provides new base classes for Controllers, Pawn, Character, and PlayerState that
 3. (Optional but recommended) Use `CommonGameplayPawn` or `CommonGameplayCharacter` as the base classes for your pawns.
 
 ## Additional Info
-- Due to the nature of server initialization, ability systems might not be ready immediately. The Blueprint Native Event `AbilitySystemReady()` is the best place to call code or blueprints that you want to run once the ability system is ready.
+- Due to the nature of server initialization, ability systems might not be ready immediately. The Blueprint Native Event `AbilitySystemReady()` is the best place to call code or blueprints that you want to run once the ability system is ready. *Note:* This Event can fire multiple times.
 
 ## Potential Future Additions
 - SimpleGameplay classes to support Pawns and Controllers whose AbilitySystemComponent lives on the pawn.
