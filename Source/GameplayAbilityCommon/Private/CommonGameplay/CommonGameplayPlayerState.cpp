@@ -1,5 +1,5 @@
-﻿// Copyright Kevin Gauthier 2026
-
+﻿//MIT License
+//Copyright (c) 2026 Kevin Gauthier
 
 #include "CommonGameplay/CommonGameplayPlayerState.h"
 
