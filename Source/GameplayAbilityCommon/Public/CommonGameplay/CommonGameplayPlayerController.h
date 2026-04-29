@@ -54,6 +54,8 @@ protected:
 	
 	void CheckAbilitySystemReady();
 
+	void NotifyAbilitySystemReady();
+
 //============
 // PROPERTIES
 //============
