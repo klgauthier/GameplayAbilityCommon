@@ -18,14 +18,3 @@ UAbilitySystemComponent* ACommonGameplayPlayerState::GetAbilitySystemComponent()
 {
 	return AbilitySystem;
 }
-
-void ACommonGameplayPlayerState::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-
-	check(AbilitySystem);
-	if(IsValid(GetPawn()))
-	{
-		AbilitySystem->InitAbilityActorInfo(this, GetPawn());	
-	}
-}

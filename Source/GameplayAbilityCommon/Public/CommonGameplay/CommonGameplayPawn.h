@@ -10,7 +10,7 @@
 
 class ACommonGameplayPlayerState;
 
-/*
+/**
  * This Pawn works with CommonGameplayPlayerState and a CommonGameplayPlayerController or CommonGameplayAIController.
  * The ability system component for this pawn is owned by its PlayerState, so it will persist through pawn respawns
  * and be replicated across the network.
@@ -25,12 +25,12 @@ class GAMEPLAYABILITYCOMMON_API ACommonGameplayPawn : public APawn, public IAbil
 //===========
 
 public:
-	/*
+	/**
 	 * Retrieves the AbilitySystemComponent from the PlayerState.
 	*/
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
-	/*
+	/**
 	 * Retrieves this controller's CommonGameplayPlayerState.
 	*/
 	UFUNCTION(BlueprintPure, Category="Ability System")

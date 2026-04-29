@@ -29,12 +29,10 @@ public:
 
 public:
 
-	/*
+	/**
 	 * Retrieves the ability system component that is owned by this player state.
 	*/
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-
-	virtual void PostInitializeComponents() override;
 
 protected:
 
@@ -45,13 +43,13 @@ protected:
 public:
 
 protected:
-	/*
+	/**
 	 * The ability system component, used to manage gameplay attributes, effects, and abilities.
 	*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ability System")
 	TObjectPtr<UAbilitySystemComponent> AbilitySystem;
 
-	/*
+	/**
 	 * Replication properties for gameplay effects on the ability system.
 	 * Full = Makes all clients able to access all info of all other clients (heavy replication traffic).
 	 * Mixed (default) = Makes owning client and server able to access all info, minimal info for other clients.

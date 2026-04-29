@@ -24,18 +24,16 @@ void ACommonGameplayPlayerController::BeginPlay()
 		CommonGameplayPlayerState = GetPlayerState<ACommonGameplayPlayerState>();
 	}
 
-	if(IsValid(GetPawn()) && IsValid(CommonGameplayPlayerState))
+	if(!IsAbilitySystemReady())
 	{
-		CommonGameplayPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(CommonGameplayPlayerState, GetPawn());
+		GetWorldTimerManager().SetTimer(CheckReadyTimerHandle,
+			this,
+			&ACommonGameplayPlayerController::CheckAbilitySystemReady,
+			1.0f/100.0f,
+			true);
+
+		CheckAbilitySystemReady();		
 	}
-
-	CheckAbilitySystemReady();
-
-	GetWorldTimerManager().SetTimer(CheckReadyTimerHandle,
-		this,
-		&ACommonGameplayPlayerController::CheckAbilitySystemReady,
-		1.0f/100.0f,
-		true);
 }
 
 UAbilitySystemComponent* ACommonGameplayPlayerController::GetAbilitySystemComponent() const
@@ -49,7 +47,16 @@ UAbilitySystemComponent* ACommonGameplayPlayerController::GetAbilitySystemCompon
 		return nullptr;
 	}
 
-	const ACommonGameplayPlayerState* PlayerStateCast = Cast<ACommonGameplayPlayerState>(PlayerState);
+	const ACommonGameplayPlayerState* PlayerStateCast = GetPlayerState<ACommonGameplayPlayerState>();
+
+	if(!PlayerStateCast)
+	{
+		UE_LOG(LogGameplayAbilityCommon,
+			Error,
+			TEXT("[ACommonGameplayPlayerController::GetAbilitySystemComponent] PlayerState must be a CommonGameplayPlayerState or child."));
+	
+		return nullptr;
+	}
 
 	return PlayerStateCast->GetAbilitySystemComponent();
 }
@@ -71,26 +78,37 @@ bool ACommonGameplayPlayerController::IsAbilitySystemReady()
 	if(!IsValid(CommonGameplayPlayerState))
 	{
 		CommonGameplayPlayerState = GetPlayerState<ACommonGameplayPlayerState>();
+		if(!IsValid(CommonGameplayPlayerState))
+		{
+			return false;
+		}
 	}
 	
 	// missing pawn
-	if(!IsValid(GetPawn()))
+	APawn* MyPawn = GetPawn();
+	if(!IsValid(MyPawn))
+	{
+		return false;
+	}
+
+	// Controller is told it has a pawn before the pawn is told it has a controller
+	if(!IsValid(MyPawn->Controller))
 	{
 		return false;
 	}
 
 	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if(!IsValid(ASC->GetAvatarActor()) && !IsValid(ASC->GetOwnerActor()))
+	if(ASC->GetAvatarActor() != MyPawn || !IsValid(ASC->GetAvatarActor()) || !IsValid(ASC->GetOwnerActor()))
 	{
-		ASC->InitAbilityActorInfo(CommonGameplayPlayerState, GetPawn());
+		ASC->InitAbilityActorInfo(CommonGameplayPlayerState, MyPawn);
 	}
 
-	if(!bServerAbilitySystemIsReady && !IsNetMode(NM_Client))
+	if(!IsNetMode(NM_Client))
 	{
 		bServerAbilitySystemIsReady = true;
 	}
 
-	return bServerAbilitySystemIsReady;
+	return true;
 }
 
 void ACommonGameplayPlayerController::CheckAbilitySystemReady()
@@ -100,24 +118,14 @@ void ACommonGameplayPlayerController::CheckAbilitySystemReady()
 		return;
 	}
 
-	if(IsNetMode(NM_Client))
-	{
-		UE_LOG(LogGameplayAbilityCommon,
+	const FString NetModeString = IsNetMode(NM_Client)? TEXT("Client") : IsNetMode(NM_ListenServer)? TEXT("ListenServer") : TEXT("Server");
+	UE_LOG(LogGameplayAbilityCommon,
 			Log,
-			TEXT("Ability System Initialized on Client for player %s."), *GetName());
-	}
-	else if(IsNetMode(NM_ListenServer))
-	{
-		UE_LOG(LogGameplayAbilityCommon,
-			Log,
-			TEXT("Ability System Initialized on ListenServer for player %s."), *GetName());
-	}
-	else
-	{
-		UE_LOG(LogGameplayAbilityCommon,
-			Log,
-			TEXT("Ability System Initialized on Server for player %s."), *GetName());
-	}
+			TEXT("[ACommonGameplayPlayerController] Ability System Initialized on %s for %s. OwnerActor=[%s], AvatarActor=[%s]"),
+			*NetModeString,
+			*GetName(),
+			*GetAbilitySystemComponent()->GetOwnerActor()->GetName(),
+			*GetAbilitySystemComponent()->GetAvatarActor()->GetName());
 
 	Execute_AbilitySystemReady(this, GetAbilitySystemComponent());
 	Execute_AbilitySystemReady(GetPawn(), GetAbilitySystemComponent());
