@@ -22,7 +22,11 @@ void ACommonGameplayAIController::BeginPlay()
 		CommonGameplayPlayerState = GetPlayerState<ACommonGameplayPlayerState>();
 	}
 
-	if(!IsAbilitySystemReady())
+	if(IsAbilitySystemReady())
+	{
+		NotifyAbilitySystemReady();
+	}
+	else
 	{
 		GetWorldTimerManager().SetTimer(CheckReadyTimerHandle,
 			this,
@@ -103,10 +107,15 @@ void ACommonGameplayAIController::CheckAbilitySystemReady()
 			*GetAbilitySystemComponent()->GetOwnerActor()->GetName(),
 			*GetAbilitySystemComponent()->GetAvatarActor()->GetName());
 
+	NotifyAbilitySystemReady();
+	
+	GetWorldTimerManager().ClearTimer(CheckReadyTimerHandle);
+}
+
+void ACommonGameplayAIController::NotifyAbilitySystemReady()
+{
 	Execute_AbilitySystemReady(this, GetAbilitySystemComponent());
 	Execute_AbilitySystemReady(GetPawn(), GetAbilitySystemComponent());
 	Execute_AbilitySystemReady(PlayerState, GetAbilitySystemComponent());
-	
-	GetWorldTimerManager().ClearTimer(CheckReadyTimerHandle);
 }
 
