@@ -9,7 +9,8 @@
 #include "GameFramework/PlayerController.h"
 #include "CommonGameplayPlayerController.generated.h"
 
-struct FGameplayAbilitySpecHandle;
+class ACommonGameplayPawn;
+class ACommonGameplayCharacter;
 class ACommonGameplayPlayerState;
 
 /**
@@ -24,14 +25,14 @@ class GAMEPLAYABILITYCOMMON_API ACommonGameplayPlayerController
 {	
 	GENERATED_BODY()
 
+protected:
+	virtual void BeginPlay() override;
+	
 //===========
 // FUNCTIONS
 //===========
 
 public:
-
-	virtual void BeginPlay() override;
-
 	/**
 	 * Retrieves the AbilitySystemComponent from the PlayerState.
 	*/
@@ -42,37 +43,20 @@ public:
 	*/
 	UFUNCTION(BlueprintPure, Category="Ability System")
 	ACommonGameplayPlayerState* GetCommonGameplayPlayerState() { return CommonGameplayPlayerState; }
-
-	/**
-	 * Returns true if the ability system is ready.
-	 * This has the side effect of initializing the ability system if it isn't
-	 * properly initialized already.
-	*/
-	UFUNCTION(BlueprintPure, Category="Ability System")
-	bool IsAbilitySystemReady();
-
-protected:
 	
-	void CheckAbilitySystemReady();
-
-	void NotifyAbilitySystemReady();
+	virtual void OnRep_PlayerState() override;
 
 //============
 // PROPERTIES
 //============
 
 public:
-
+	
+	
 protected:
 
 	UPROPERTY()
 	TObjectPtr<ACommonGameplayPlayerState> CommonGameplayPlayerState;
-
-	UPROPERTY(Replicated)
-	bool bServerAbilitySystemIsReady;
-
-	UPROPERTY()
-	FTimerHandle CheckReadyTimerHandle;
 
 //===========
 // DELEGATES

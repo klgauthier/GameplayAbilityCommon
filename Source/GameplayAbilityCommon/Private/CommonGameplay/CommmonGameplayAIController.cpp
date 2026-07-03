@@ -21,21 +21,6 @@ void ACommonGameplayAIController::BeginPlay()
 	{
 		CommonGameplayPlayerState = GetPlayerState<ACommonGameplayPlayerState>();
 	}
-
-	if(IsAbilitySystemReady())
-	{
-		NotifyAbilitySystemReady();
-	}
-	else
-	{
-		GetWorldTimerManager().SetTimer(CheckReadyTimerHandle,
-			this,
-			&ACommonGameplayAIController::CheckAbilitySystemReady,
-			1.0f/100.0f,
-			true);
-
-		CheckAbilitySystemReady();		
-	}
 }
 
 UAbilitySystemComponent* ACommonGameplayAIController::GetAbilitySystemComponent() const
@@ -44,7 +29,7 @@ UAbilitySystemComponent* ACommonGameplayAIController::GetAbilitySystemComponent(
 	{
 		UE_LOG(LogGameplayAbilityCommon,
 			Error,
-			TEXT("[ACommonGameplayPlayerController::GetAbilitySystemComponent] Failed to get a valid PlayerState."));
+			TEXT("[ACommonGameplayAIController::GetAbilitySystemComponent] Failed to get a valid PlayerState."));
 	
 		return nullptr;
 	}
@@ -54,68 +39,12 @@ UAbilitySystemComponent* ACommonGameplayAIController::GetAbilitySystemComponent(
 	return PlayerStateCast->GetAbilitySystemComponent();
 }
 
-bool ACommonGameplayAIController::IsAbilitySystemReady()
+void ACommonGameplayAIController::OnRep_PlayerState()
 {
-	// missing playerstate
-	if(!IsValid(PlayerState))
-	{
-		return false;
-	}
-
-	if(!IsValid(CommonGameplayPlayerState))
+	Super::OnRep_PlayerState();
+	
+	if(IsValid(PlayerState))
 	{
 		CommonGameplayPlayerState = GetPlayerState<ACommonGameplayPlayerState>();
-		if(!IsValid(CommonGameplayPlayerState))
-		{
-			return false;
-		}
 	}
-	
-	// missing pawn
-	APawn* MyPawn = GetPawn();
-	if(!IsValid(MyPawn))
-	{
-		return false;
-	}
-
-	// Controller is told it has a pawn before the pawn is told it has a controller
-	if(!IsValid(MyPawn->Controller))
-	{
-		return false;
-	}
-
-	UAbilitySystemComponent* ASC = GetAbilitySystemComponent();
-	if(ASC->GetAvatarActor() != MyPawn || !IsValid(ASC->GetAvatarActor()) || !IsValid(ASC->GetOwnerActor()))
-	{
-		ASC->InitAbilityActorInfo(CommonGameplayPlayerState, MyPawn);
-	}
-
-	return true;
 }
-
-void ACommonGameplayAIController::CheckAbilitySystemReady()
-{
-	if(!IsAbilitySystemReady())
-	{
-		return;
-	}
-	
-	UE_LOG(LogGameplayAbilityCommon,
-			Log,
-			TEXT("[ACommonGameplayPlayerController] Ability System Initialized on Server for %s. OwnerActor=[%s], AvatarActor=[%s]"),
-			*GetName(),
-			*GetAbilitySystemComponent()->GetOwnerActor()->GetName(),
-			*GetAbilitySystemComponent()->GetAvatarActor()->GetName());
-
-	NotifyAbilitySystemReady();
-	
-	GetWorldTimerManager().ClearTimer(CheckReadyTimerHandle);
-}
-
-void ACommonGameplayAIController::NotifyAbilitySystemReady()
-{
-	Execute_AbilitySystemReady(this, GetAbilitySystemComponent());
-	Execute_AbilitySystemReady(GetPawn(), GetAbilitySystemComponent());
-	Execute_AbilitySystemReady(PlayerState, GetAbilitySystemComponent());
-}
-

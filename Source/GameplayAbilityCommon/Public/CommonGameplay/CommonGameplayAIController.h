@@ -9,6 +9,8 @@
 #include "Runtime/AIModule/Classes/AIController.h"
 #include "CommonGameplayAIController.generated.h"
 
+class ACommonGameplayPawn;
+class ACommonGameplayCharacter;
 class ACommonGameplayPlayerState;
 
 /**
@@ -25,15 +27,15 @@ class GAMEPLAYABILITYCOMMON_API ACommonGameplayAIController
 
 public:
 	ACommonGameplayAIController();
+	
+protected:
+	virtual void BeginPlay() override;
 
 //===========
 // FUNCTIONS
 //===========
 
 public:
-
-	virtual void BeginPlay() override;
-
 	/**
 	 * Retrieves the AbilitySystemComponent from the PlayerState.
 	*/
@@ -45,15 +47,9 @@ public:
 	UFUNCTION(BlueprintPure, Category="Ability System")
 	ACommonGameplayPlayerState* GetCommonGameplayPlayerState() { return CommonGameplayPlayerState; }
 
-	
-	UFUNCTION(BlueprintPure, Category="Ability System")
-	bool IsAbilitySystemReady();
+	virtual void OnRep_PlayerState() override;
 
 protected:
-	
-	void CheckAbilitySystemReady();
-
-	void NotifyAbilitySystemReady();
 
 //============
 // PROPERTIES
@@ -65,9 +61,6 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<ACommonGameplayPlayerState> CommonGameplayPlayerState;
-
-	UPROPERTY()
-	FTimerHandle CheckReadyTimerHandle;
 
 //===========
 // DELEGATES

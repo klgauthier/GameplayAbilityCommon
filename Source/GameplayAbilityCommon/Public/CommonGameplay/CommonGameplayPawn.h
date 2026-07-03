@@ -26,6 +26,8 @@ class GAMEPLAYABILITYCOMMON_API ACommonGameplayPawn : public APawn, public IAbil
 //===========
 
 public:
+	virtual void BeginPlay() override;
+	
 	/**
 	 * Retrieves the AbilitySystemComponent from the PlayerState.
 	*/
@@ -37,11 +39,23 @@ public:
 	UFUNCTION(BlueprintPure, Category="Ability System")
 	ACommonGameplayPlayerState* GetCommonGameplayPlayerState() { return CommonGameplayPlayerState; }
 
-protected:
+	// called only on the server
+	virtual void PossessedBy(AController* NewController) override;
 
 	// called only on the client
 	virtual void OnRep_PlayerState() override;
-
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Ability System")
+	virtual bool IsAbilitySystemReady() const { return bServerAbilitySystemIsReady && bLocalAbilitySystemIsReady; }
+	
+protected:
+	virtual void NotifyAbilitySystemReady();
+	virtual void ServerAbilitySystemReady();
+	virtual void LocalAbilitySystemReady();
+	
+	UFUNCTION()
+	void OnRep_ServerAbilitySystemIsReady();
+	
 //============
 // PROPERTIES
 //============
@@ -52,6 +66,12 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<ACommonGameplayPlayerState> CommonGameplayPlayerState;
+	
+	UPROPERTY(Replicated, ReplicatedUsing=OnRep_ServerAbilitySystemIsReady)
+	bool bServerAbilitySystemIsReady;
+	
+	bool bLocalAbilitySystemIsReady;
+	bool bHasBeginPlayFired;
 
 //===========
 // DELEGATES
